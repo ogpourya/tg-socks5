@@ -16,17 +16,31 @@ gum style \
   --bold \
   "🔒 Telegram SOCKS5 Proxy"
 
-# Inputs
-SOCKS_PORT="$(gum input --placeholder "SOCKS5 port (default: 1080)" --prompt "  Port › " --value "1080")"
-SOCKS_PORT="${SOCKS_PORT:-1080}"
+# Port: env > prompt
+if [ -n "${SOCKS_PORT:-}" ]; then
+  gum log --level info "Using port from env: ${SOCKS_PORT}"
+else
+  SOCKS_PORT="$(gum input --placeholder "SOCKS5 port (default: 1080)" --prompt "  Port › " --value "1080")"
+  SOCKS_PORT="${SOCKS_PORT:-1080}"
+fi
 
-PROXY_USER="$(gum input --placeholder "Username (leave blank = random)" --prompt "  User › ")"
-PROXY_USER="${PROXY_USER:-tg_$(openssl rand -hex 3)}"
+# User: env > prompt
+if [ -n "${PROXY_USER:-}" ]; then
+  gum log --level info "Using username from env: ${PROXY_USER}"
+else
+  PROXY_USER="$(gum input --placeholder "Username (leave blank = random)" --prompt "  User › ")"
+  PROXY_USER="${PROXY_USER:-tg_$(openssl rand -hex 3)}"
+fi
 
-PROXY_PASS="$(gum input --placeholder "Password (leave blank = random)" --prompt "  Pass › " --password)"
-if [ -z "$PROXY_PASS" ]; then
-  PROXY_PASS="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9')"
-  PROXY_PASS="${PROXY_PASS:0:24}"
+# Pass: env > prompt
+if [ -n "${PROXY_PASS:-}" ]; then
+  gum log --level info "Using password from env"
+else
+  PROXY_PASS="$(gum input --placeholder "Password (leave blank = random)" --prompt "  Pass › " --password)"
+  if [ -z "$PROXY_PASS" ]; then
+    PROXY_PASS="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9')"
+    PROXY_PASS="${PROXY_PASS:0:24}"
+  fi
 fi
 
 CONTAINER_NAME="tg-socks5"
