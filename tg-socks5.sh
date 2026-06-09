@@ -94,7 +94,8 @@ $(gum style --foreground 12 --bold 'Host  ') ${SERVER_IP}
 $(gum style --foreground 12 --bold 'Port  ') ${SOCKS_PORT}
 $(gum style --foreground 12 --bold 'User  ') ${PROXY_USER}
 $(gum style --foreground 12 --bold 'Pass  ') ${PROXY_PASS}
-$(gum style --foreground 12 --bold 'URL   ') socks5://${PROXY_USER}:${PROXY_PASS}@${SERVER_IP}:${SOCKS_PORT}"
+$(gum style --foreground 12 --bold 'URL   ') socks5://${PROXY_USER}:${PROXY_PASS}@${SERVER_IP}:${SOCKS_PORT}
+$(gum style --foreground 12 --bold 'TG    ') tg://proxy?server=${SERVER_IP}\&port=${SOCKS_PORT}\&user=${PROXY_USER}\&pass=${PROXY_PASS}"
 
 cleanup() {
   echo ""
