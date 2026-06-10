@@ -55,11 +55,27 @@ Press `Ctrl+C` to stop. The container is gone instantly.
 SOCKS_PORT=9050 PROXY_USER=me PROXY_PASS=secret bash tg-socks5.sh
 ```
 
-| Variable | Default |
-|---|---|
-| `SOCKS_PORT` | `1080` |
-| `PROXY_USER` | `tg_<random>` |
-| `PROXY_PASS` | `<random 24 chars>` |
+| Variable | Default | Description |
+|---|---|---|
+| `SOCKS_PORT` | `1080` | SOCKS5 listen port |
+| `PROXY_USER` | `tg_<random>` | SOCKS5 username |
+| `PROXY_PASS` | `<random 24 chars>` | SOCKS5 password |
+| `UPSTREAM_PROXY` | _(none)_ | Upstream proxy URL to chain through |
+
+### Upstream proxy
+
+You can chain the SOCKS5 through another proxy. Specify a URL like:
+
+```
+socks5://user:pass@upstream-host:1080
+http://upstream-host:3128
+https://user:pass@upstream-host:8080
+socks4://upstream-host:1080
+```
+
+Supported protocols: `socks5`, `socks4`, `http`, `https`.
+
+If the upstream host is on the same machine, use `host.docker.internal` (Docker Desktop) or the Docker gateway IP (e.g. `172.17.0.1` on Linux) instead of `127.0.0.1`, since 3proxy runs inside a container.
 
 ---
 

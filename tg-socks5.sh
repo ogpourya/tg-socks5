@@ -43,6 +43,41 @@ else
   fi
 fi
 
+# Upstream proxy (optional): env > prompt
+if [ -n "${UPSTREAM_PROXY:-}" ]; then
+  gum log --level info "Using upstream proxy from env"
+else
+  UPSTREAM_PROXY="$(gum input --placeholder "Upstream proxy URL (leave blank = none)" --prompt "  Upstream › " --value "")"
+fi
+
+UP_PROTO=""
+UP_HOST=""
+UP_PORT=""
+UP_USER=""
+UP_PASS=""
+if [ -n "$UPSTREAM_PROXY" ]; then
+  if [[ "$UPSTREAM_PROXY" =~ ^(socks5|socks4|http|https)://([^:@]+):([^@]+)@([^:]+):([0-9]+)$ ]]; then
+    UP_PROTO=${BASH_REMATCH[1]}
+    UP_USER=${BASH_REMATCH[2]}
+    UP_PASS=${BASH_REMATCH[3]}
+    UP_HOST=${BASH_REMATCH[4]}
+    UP_PORT=${BASH_REMATCH[5]}
+  elif [[ "$UPSTREAM_PROXY" =~ ^(socks5|socks4|http|https)://([^:]+):([0-9]+)$ ]]; then
+    UP_PROTO=${BASH_REMATCH[1]}
+    UP_HOST=${BASH_REMATCH[2]}
+    UP_PORT=${BASH_REMATCH[3]}
+  else
+    gum log --level warn "Invalid upstream proxy URL format. Expected: <proto>://[user:pass@]host:port"
+  fi
+fi
+
+# Map protocol to 3proxy parent type
+case "$UP_PROTO" in
+  socks5|socks4) UP_TYPE="$UP_PROTO" ;;
+  http)          UP_TYPE="http" ;;
+  https)         UP_TYPE="connect" ;;
+esac
+
 CONTAINER_NAME="tg-socks5"
 
 gum spin --spinner dot --title "Fetching Telegram CIDR list..." -- sleep 0 &
@@ -66,10 +101,16 @@ TMPCONFIG="$(mktemp /tmp/3proxy-XXXXXX.cfg)"
   while IFS= read -r net; do
     [ -z "$net" ] && continue
     echo "allow ${PROXY_USER} * ${net}"
+    if [ -n "$UP_HOST" ]; then
+      echo "parent 1000 ${UP_TYPE} ${UP_HOST} ${UP_PORT}${UP_USER:+ ${UP_USER} ${UP_PASS}}"
+    fi
   done <<< "$IPV4_NETS"
   while IFS= read -r net; do
     [ -z "$net" ] && continue
     echo "allow ${PROXY_USER} * ${net}"
+    if [ -n "$UP_HOST" ]; then
+      echo "parent 1000 ${UP_TYPE} ${UP_HOST} ${UP_PORT}${UP_USER:+ ${UP_USER} ${UP_PASS}}"
+    fi
   done <<< "$IPV6_NETS"
   echo "deny *"
   echo "socks -p${SOCKS_PORT}"
@@ -95,7 +136,7 @@ $(gum style --foreground 12 --bold 'Port  ') ${SOCKS_PORT}
 $(gum style --foreground 12 --bold 'User  ') ${PROXY_USER}
 $(gum style --foreground 12 --bold 'Pass  ') ${PROXY_PASS}
 $(gum style --foreground 12 --bold 'URL   ') socks5://${PROXY_USER}:${PROXY_PASS}@${SERVER_IP}:${SOCKS_PORT}
-$(gum style --foreground 12 --bold 'TG    ') tg://proxy?server=${SERVER_IP}\&port=${SOCKS_PORT}\&user=${PROXY_USER}\&pass=${PROXY_PASS}"
+$(gum style --foreground 12 --bold 'TG    ') https://t.me/socks?server=${SERVER_IP}&port=${SOCKS_PORT}&user=${PROXY_USER}&pass=${PROXY_PASS}"
 
 cleanup() {
   echo ""
